@@ -40,48 +40,67 @@
 #ifdef BAZEL_BUILD
 #include "examples/protos/helloworld.grpc.pb.h"
 #else
-#include "helloworld.grpc.pb.h"
+// #include "helloworld.grpc.pb.h"
+#include "teerpc.grpc.pb.h"
+#include "teerpc.pb.h"
+#include "teetask.pb.h"
+
 #endif
 
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
-using helloworld::HelloRequest;
-using helloworld::HelloReply;
-using helloworld::Greeter;
+//using helloworld::HelloRequest;
+//using helloworld::HelloReply;
+//using helloworld::Greeter;
+using teerpc::TeeComputor;
+using teerpc::TaskReply;
+using teerpc::TaskRequest;
+using teerpc::CypherData;
+using teetask::AddReply;
+using teetask::AddRequest;
+
+bool auth_verify(std::string access_key_id, std::string secret_access_key){
+    return true;
+}
+
 
 // Logic and data behind the server's behavior.
-class GreeterServiceImpl final : public Greeter::Service {
-  Status SayHello(ServerContext* context, const HelloRequest* request,
-                  HelloReply* reply) override {
-    std::string prefix("Hello ");
-    reply->set_message(prefix + request->name());
-    return Status::OK;
-  }
+class TeeComputorImpl final : public TeeComputor::Service {
+    Status execute(ServerContext* context, const TaskRequest* request,
+                  TaskReply* reply) override {
+        auth_verify(request->access_key_id(), request->secret_access_key());
+        std::string prefix("Hello ");
+        //    if request->task_type() == 1:
+
+        //reply->set_message(prefix + request->name());
+        return Status::OK;
+    }
 };
 
 void RunServer() {
-  std::string server_address("0.0.0.0:50051");
-  GreeterServiceImpl service;
+    std::string server_address("0.0.0.0:50051");
+    //GreeterServiceImpl service;
+    TeeComputorImpl service;
 
-  ServerBuilder builder;
-  // Listen on the given address without any authentication mechanism.
-  builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-  // Register "service" as the instance through which we'll communicate with
-  // clients. In this case it corresponds to an *synchronous* service.
-  builder.RegisterService(&service);
-  // Finally assemble the server.
-  std::unique_ptr<Server> server(builder.BuildAndStart());
-  std::cout << "Server listening on " << server_address << std::endl;
+    ServerBuilder builder;
+    // Listen on the given address without any authentication mechanism.
+    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    // Register "service" as the instance through which we'll communicate with
+    // clients. In this case it corresponds to an *synchronous* service.
+    builder.RegisterService(&service);
+    // Finally assemble the server.
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+    std::cout << "Server listening on " << server_address << std::endl;
 
-  // Wait for the server to shutdown. Note that some other thread must be
-  // responsible for shutting down the server for this call to ever return.
-  server->Wait();
+    // Wait for the server to shutdown. Note that some other thread must be
+    // responsible for shutting down the server for this call to ever return.
+    server->Wait();
 }
 
 int main(int argc, char** argv) {
-  RunServer();
+    RunServer();
 
-  return 0;
+    return 0;
 }
